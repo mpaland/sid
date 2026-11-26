@@ -1,0 +1,6 @@
+# text files are stored with LF and checked out as the platform likes it; scripts keep LF everywhere
+* text=auto
+*.sh  text eol=lf
+*.py  text eol=lf
+*.yml text eol=lf
+*.wav binary

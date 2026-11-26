@@ -1,0 +1,20 @@
+# build folders
+/build/
+/build-*/
+/out/
+/cmake-build-*/
+
+# what the examples and the tests write when they are started in the source tree
+*.wav
+*.raw
+
+# MOD files are music of others: only for listening here, never in the repository
+*.mod
+
+# editors and tools
+.vs/
+.vscode/
+.idea/
+*.user
+__pycache__/
+*.pyc

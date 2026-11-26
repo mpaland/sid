@@ -1,0 +1,21 @@
+# sid release: release-please keeps a pull request open with the next version and its changelog, which it makes
+# from the commit messages on main (feat: a new feature, fix: a bug fix, feat!: a breaking change). Merging that
+# pull request is the release: it tags the version (v1.2.3) and creates the GitHub release.
+# The configuration is release-please-config.json, the last released version is in .release-please-manifest.json.
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Release pull request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v5

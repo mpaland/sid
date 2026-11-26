@@ -1,0 +1,62 @@
+# sid CI: build the tests and the examples and run them, on Linux (GCC, Clang), Windows (MSVC) and macOS, each
+# with C++11 and C++20; compile the library for bare Cortex-M microcontrollers and print its sizes.
+# The WAV files the examples write are kept as an artifact: download it to listen to the examples.
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}, C++${{ matrix.std }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { name: Linux GCC,    os: ubuntu-latest,  cxx: g++,     werror: 'ON'  }
+          - { name: Linux Clang,  os: ubuntu-latest,  cxx: clang++, werror: 'ON'  }
+          - { name: Windows MSVC, os: windows-latest, cxx: '',      werror: 'ON'  }
+          - { name: macOS Clang,  os: macos-latest,   cxx: clang++, werror: 'OFF' }
+        std: [ 11, 20 ]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Configure
+        shell: bash
+        run: |
+          if [ -n "${{ matrix.config.cxx }}" ]; then export CXX="${{ matrix.config.cxx }}"; fi
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=${{ matrix.std }} -DSID_WERROR=${{ matrix.config.werror }}
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Test (the test program and every example)
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Keep the sound of the examples
+        if: matrix.config.name == 'Linux GCC' && matrix.std == 11
+        uses: actions/upload-artifact@v7
+        with:
+          name: sid-examples-wav
+          path: build/examples/wav/*.wav
+          if-no-files-found: error
+
+  embedded:
+    name: Cortex-M (arm-none-eabi-g++)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the ARM compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libstdc++-arm-none-eabi-newlib
+
+      - name: Compile for Cortex-M0 and Cortex-M4, print the sizes
+        run: |
+          sh tools/embedded_size.sh | tee sizes.txt
+          { echo '```'; cat sizes.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
