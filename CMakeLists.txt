@@ -15,7 +15,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 project(sid
-  VERSION      1.0.0    # x-release-please-version
+  VERSION      1.1.0    # x-release-please-version
   DESCRIPTION  "Sound Interface Driver library - the sound of the 80s home computers for small systems"
   HOMEPAGE_URL "https://github.com/mpaland/sid"
   LANGUAGES    CXX
