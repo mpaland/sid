@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/mpaland/sid/compare/v1.0.0...v1.1.0) (2026-11-27)
+
+
+### Features
+
+* **sequencer:** Added row(), step() and ended() to the sequencer and frames() to the output, with test and docs ([106c7dd](https://github.com/mpaland/sid/commit/106c7dd8590c43e2bae477d8ee43167a1c4f1c3f))
+
 ## 1.0.0 (2026-11-26)
 
 The first version as a project of its own. The library comes from the
