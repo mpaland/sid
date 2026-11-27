@@ -118,6 +118,7 @@ public:
   explicit output(device& dev)
     : dev_(dev)
     , rate_(0U)
+    , frames_(0U)
   { }
 
   /**
@@ -134,7 +135,8 @@ public:
     if ((sample_rate == 0U) || !dev_.start(sample_rate)) {
       return false;
     }
-    rate_ = sample_rate;
+    rate_   = sample_rate;
+    frames_ = 0U;
     return true;
   }
 
@@ -152,6 +154,11 @@ public:
   // sample rate of the open output [Hz], 0 = not open
   std::uint32_t rate() const
   { return rate_; }
+
+  // frames written to the device since open(): the position of the sound, frames() / rate() seconds of it are
+  // written. What is heard is behind that by what the device has not played yet
+  std::uint64_t frames() const
+  { return frames_; }
 
   // volume of the device: 0 = mute .. 255 = full scale; false if the device has none
   bool set_volume(std::uint32_t volume)
@@ -176,6 +183,7 @@ public:
       if ((frames != 0U) && !dev_.write(chunk, frames)) {
         return false;
       }
+      frames_ += frames;
       if (frames < SID_CHUNK_FRAMES) {
         return true;
       }
@@ -202,6 +210,7 @@ public:
       if ((frames != 0U) && !dev_.write(chunk, frames)) {
         return false;
       }
+      frames_ += frames;
       if (frames < want) {
         break;      // the source has ended
       }
@@ -226,7 +235,8 @@ public:
       if (!dev_.write(chunk, n)) {
         return false;
       }
-      frames -= n;
+      frames_ += n;
+      frames  -= n;
     }
     return true;
   }
@@ -234,6 +244,7 @@ public:
 private:
   device&         dev_;
   std::uint32_t   rate_;    // 0 = not open
+  std::uint64_t   frames_;  // written since open()
 };
 
 } // namespace sid

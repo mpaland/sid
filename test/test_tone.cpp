@@ -566,6 +566,36 @@ TEST_CASE(sid_output_write_fails)
 }
 
 
+TEST_CASE(sid_output_position)
+{
+  // the output counts the frames it writes: the source, silence, a slice of time; a rejected write counts nothing
+  memory_device dev;
+  sid::output out(dev);
+  CHECK_EQ(static_cast<std::uint32_t>(out.frames()), 0U);
+  REQUIRE(out.open(16000U));
+  count_source a(1000U);
+  REQUIRE(out.play(a));
+  CHECK_EQ(static_cast<std::uint32_t>(out.frames()), 1000U);
+  REQUIRE(out.pause(25U));                                       // silence counts as well: 400 frames
+  CHECK_EQ(static_cast<std::uint32_t>(out.frames()), 1400U);
+  count_source b(5000U);
+  REQUIRE(out.play(b, 100U));                                    // a slice of time: 1600 frames of the source
+  CHECK_EQ(static_cast<std::uint32_t>(out.frames()), 3000U);
+  CHECK_EQ(static_cast<std::uint32_t>(out.frames()), static_cast<std::uint32_t>(dev.frames()));
+  dev.fail_write(true);
+  count_source c(1000U);
+  CHECK(!out.play(c));
+  CHECK(!out.pause(10U));
+  CHECK_EQ(static_cast<std::uint32_t>(out.frames()), 3000U);
+  dev.fail_write(false);
+
+  // open with another rate: the count starts again
+  REQUIRE(out.open(8000U));
+  CHECK_EQ(static_cast<std::uint32_t>(out.frames()), 0U);
+  out.close();
+}
+
+
 TEST_CASE(sid_beep_and_play_wav)
 {
   memory_device dev;

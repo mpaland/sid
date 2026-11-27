@@ -188,6 +188,7 @@ The **output** plays sources on a device:
 | `set_volume(0 .. 255)` | volume of the device, false if it has none                                                                                                                    |
 | `close()`              | lets the sound play out and switches the device off                                                                                                           |
 | `rate()`, `dev()`    | the sample rate of the open output (0: not open), the device                                                                                                  |
+| `frames()`             | frames written to the device since `open()`: the position of the sound. What is heard is behind it by what the device has not played yet                    |
 
 A source is made for the sample rate of the output (`out.rate()`); nothing is resampled. A source of your own - a generator or an effect around another source - is a class with that one function, see [04_custom_source.cpp](examples/04_custom_source.cpp).
 
@@ -261,7 +262,7 @@ sid::play(out, tune);                           // the song from its first to it
 
 For a product the patches are a constant table, so they need no RAM and no start-up code - see [10_drum_pattern.cpp](examples/10_drum_pattern.cpp).
 
-The sequencer is a source: it ends after the last row, when the last notes have faded (`SID_SONG_TAIL_MS` at most). `sid::sequencer(rate, song, loops)` plays a song several times, with 0 loops for ever - played in slices of time with `out.play(sequencer, ms)`, the app can start notes of its own in between on the voices the song leaves free (`sequencer::voices()`): music with sound effects, see [13_loop_and_notes.cpp](examples/13_loop_and_notes.cpp).
+The sequencer is a source: it ends after the last row, when the last notes have faded (`SID_SONG_TAIL_MS` at most). `sid::sequencer(rate, song, loops)` plays a song several times, with 0 loops for ever - played in slices of time with `out.play(sequencer, ms)`, the app can start notes of its own in between on the voices the song leaves free (`sequencer::voices()`): music with sound effects, see [13_loop_and_notes.cpp](examples/13_loop_and_notes.cpp). `row()` and `step()` tell where the song is (the step rendered last), `ended()` that its last step has started - for what shall follow the music: a display of the pattern, lights on the beat.
 
 [`examples/data/make_invention13.py`](examples/data/make_invention13.py) shows how to turn written music into a song: it holds the notes of a two part invention by Bach in LilyPond notation, arranges them for four voices and writes the patterns.
 

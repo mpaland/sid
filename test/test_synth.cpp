@@ -990,6 +990,43 @@ TEST_CASE(sid_sequencer_steps)
 }
 
 
+TEST_CASE(sid_sequencer_position)
+{
+  // two rows of 4 steps of 100 ms: the sequencer tells the row and the step that play
+  static const sid::slot order[] = { { 0U, 0 }, { 1U, 0 } };
+  static const sid::song tune = { song_patches, song_patterns, order, 2U, 1U, 4U, 100U };
+  const std::size_t step_frames = RATE / 10U;
+  std::vector<std::int16_t> buffer(step_frames * 2U);
+
+  sid::sequencer seq(RATE, tune);
+  CHECK_EQ(seq.row(), 0U);
+  CHECK_EQ(seq.step(), 0U);
+  CHECK(!seq.ended());
+  for (std::size_t n = 0U; n < 8U; ++n) {
+    // the first frame of a step starts it, the last one still belongs to it
+    CHECK_EQ(seq.render(&buffer[0], 1U), 1U);
+    CHECK_EQ(seq.row(), n / 4U);
+    CHECK_EQ(seq.step(), n % 4U);
+    CHECK_EQ(seq.ended(), n == 7U);         // no step follows the last one
+    CHECK_EQ(seq.render(&buffer[0], step_frames - 1U), step_frames - 1U);
+    CHECK_EQ(seq.row(), n / 4U);
+    CHECK_EQ(seq.step(), n % 4U);
+  }
+
+  // a song that plays for ever goes round and never ends
+  sid::sequencer endless(RATE, tune, 0U);
+  for (std::size_t n = 0U; n < 8U; ++n) {
+    CHECK_EQ(endless.render(&buffer[0], step_frames), step_frames);
+  }
+  CHECK_EQ(endless.row(), 1U);
+  CHECK_EQ(endless.step(), 3U);
+  CHECK_EQ(endless.render(&buffer[0], 1U), 1U);
+  CHECK_EQ(endless.row(), 0U);
+  CHECK_EQ(endless.step(), 0U);
+  CHECK(!endless.ended());
+}
+
+
 TEST_CASE(sid_sequencer_tracks)
 {
   // two tracks at once, the second transposed; a row without a pattern lets the note go on

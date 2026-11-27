@@ -91,6 +91,8 @@ class sequencer : public source
   std::uint32_t   loops_;       // rounds left, 0 = for ever
   std::size_t     row_;         // position of the next step
   std::size_t     step_;
+  std::size_t     at_row_;      // position of the step that plays
+  std::size_t     at_step_;
   std::uint32_t   left_;        // frames left of the current step
   std::uint32_t   fraction_;    // [1 / 1000 frame] carried to the next step
   std::uint32_t   tail_;        // [ms] of the fading end so far
@@ -108,6 +110,8 @@ public:
     , loops_(loops)
     , row_(0U)
     , step_(0U)
+    , at_row_(0U)
+    , at_step_(0U)
     , left_(0U)
     , fraction_(0U)
     , tail_(0U)
@@ -133,6 +137,18 @@ public:
   synth& voices()
   { return synth_; }
 
+  // row of the song that plays: 0 .. rows - 1 (the row of the step rendered last; 0 before the first)
+  std::size_t row() const
+  { return at_row_; }
+
+  // step of that row that plays: 0 .. steps - 1
+  std::size_t step() const
+  { return at_step_; }
+
+  // true once the last step of the song has started: no step follows it, its notes fade and the source ends
+  bool ended() const
+  { return ended_; }
+
 private:
   // the next piece of the song: a step, or 10 ms of the fading end; \return false when the song has ended
   bool next()
@@ -151,10 +167,12 @@ private:
     }
 
     // the notes of the step
+    at_row_  = row_;
+    at_step_ = step_;
     for (std::size_t track = 0U; track < song_.tracks; ++track) {
       const slot& where = song_.order[(row_ * song_.tracks) + track];
       if (where.pattern != no_pattern) {
-        const step& now = song_.patterns[where.pattern][step_];
+        const sid::step& now = song_.patterns[where.pattern][step_];     // sid::step: step() is the position
         if (now.key == key::off) {
           synth_.note_off(track);
         }
